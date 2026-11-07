@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIFTY PRO • Live Technical Analysis & Charting Terminal</title>
+    <meta name="description" content="Professional live technical study web portal for NIFTY 50, Indian Indices, and Equities with date-range selector, intraday full-scale charts, and advanced technical indicators.">
+    <meta name="keywords" content="Nifty 50, Technical Analysis, Stock Charts, Live Trading, Indian Stock Market, Intraday Charts, TradingView, NSE">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css?v=1.6">
+</head>
+<body>
+    <div id="app">
+        <!-- =================================================================
+             Top Navigation Header
+             ================================================================= -->
+        <header class="terminal-header">
+            <div class="header-left">
+                <!-- Brand Logo -->
+                <div class="brand-badge">
+                    <div class="brand-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                            <polyline points="16 7 22 7 22 13"></polyline>
+                        </svg>
+                    </div>
+                    <span>NIFTY<span style="color: var(--color-cyan);">PRO</span></span>
+                </div>
+
+                <!-- Mini Indices Quick Bar (Synced with Live Official NSE Data) -->
+                <div class="indices-mini-ticker">
+                    <div class="mini-ticker-item watchlist-item" data-symbol="^NSEI" data-display="NIFTY 50" data-sector="Index" data-type="Index">
+                        <span class="ticker-name">NIFTY 50</span>
+                        <span id="ticker-price-nifty" class="ticker-price font-mono">25,030.35</span>
+                        <span id="ticker-chg-nifty" class="ticker-sub font-mono text-up">+2.01%</span>
+                    </div>
+                    <div class="mini-ticker-item watchlist-item" data-symbol="^NSEBANK" data-display="BANK NIFTY" data-sector="Index" data-type="Index">
+                        <span class="ticker-name">BANK NIFTY</span>
+                        <span id="ticker-price-bank" class="ticker-price font-mono">59,086.00</span>
+                        <span id="ticker-chg-bank" class="ticker-sub font-mono text-up">+2.27%</span>
+                    </div>
+                    <div class="mini-ticker-item watchlist-item" data-symbol="^CNXIT" data-display="NIFTY IT" data-sector="Index" data-type="Index">
+                        <span class="ticker-name">NIFTY IT</span>
+                        <span id="ticker-price-it" class="ticker-price font-mono">32,977.90</span>
+                        <span id="ticker-chg-it" class="ticker-sub font-mono text-up">+0.43%</span>
+                    </div>
+                    <div class="mini-ticker-item watchlist-item" data-symbol="^INDIAVIX" data-display="INDIA VIX" data-sector="Volatility" data-type="Index">
+                        <span class="ticker-name">INDIA VIX</span>
+                        <span id="ticker-price-vix" class="ticker-price font-mono">17.66</span>
+                        <span id="ticker-chg-vix" class="ticker-sub font-mono text-up">+13.35%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Chart Symbol & Live Price Header -->
+            <div class="header-center">
+                <div class="active-symbol-badge">
+                    <div class="symbol-line-1">
+                        <span id="active-symbol-display" class="symbol-title">NIFTY 50</span>
+                        <span id="active-symbol-sector" class="sector-pill badge-index">Index</span>
+                    </div>
+                    <span id="active-symbol-fullname" class="symbol-fullname">Nifty 50 Benchmark Index • NSE</span>
+                </div>
+
+                <div class="active-price-block">
+                    <span id="header-live-price" class="live-price font-mono">₹25,030.35</span>
+                    <span id="header-live-change" class="price-change-pill pill-up">+493.75 (+2.01%)</span>
+                </div>
+            </div>
+
+            <!-- Search Bar, Market Status & Actions -->
+            <div class="header-right">
+                <!-- Search Trigger Input -->
+                <div id="header-search-trigger" class="search-trigger-box" title="Search Index or Equity (Ctrl + K)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <span class="search-placeholder">Search Index or Stock...</span>
+                    <span class="kbd-shortcut">Ctrl K</span>
+                </div>
+
+                <!-- Market Status Badge -->
+                <div id="market-status-pill" class="status-pill open">
+                    <span class="pulse-dot"></span> LIVE MARKET
+                </div>
+
+                <!-- Data Feed Source Badge -->
+                <div id="data-source-pill" class="data-source-pill live-mode" title="Connected directly to https://www.nseindia.com">
+                    <span class="data-dot"></span>
+                    <span id="data-source-label">NSE Official Feed</span>
+                </div>
+
+                <!-- Date / Range Direct Trigger Button -->
+                <button id="header-date-btn" class="header-action-pill" title="Select Date for Old Intraday or Date Range (Key: D)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span>Date / Range</span>
+                </button>
+
+                <!-- Nifty Strategy Quick Header Trigger Button -->
+                <button id="header-strategy-btn" class="header-action-pill header-strategy-pill" title="Open Nifty Hedging Strategy Calculator (Buy/Sell Future + Option Hedge)">
+                    <span class="strategy-sparkle">⚡</span>
+                    <span class="strategy-header-text">Nifty Strategy</span>
+                </button>
+
+                <!-- Action Buttons -->
+                <button id="fit-scale-btn" class="icon-btn" title="Full Chart Scale / Fit View">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                    </svg>
+                </button>
+                <button id="fullscreen-btn" class="icon-btn" title="Toggle Fullscreen (F11)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    </svg>
+                </button>
+                <button id="export-chart-btn" class="icon-btn" title="Export Chart Screenshot">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                </button>
+                <button id="toggle-watchlist-btn" class="icon-btn" title="Toggle Watchlist">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <button id="toggle-tech-panel-btn" class="icon-btn" title="Toggle Technical Study Panel">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                        <line x1="15" y1="3" x2="15" y2="21"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- =================================================================
+             Secondary Toolbar: Timeframes, Date Range, Indicators, Drawings
+             ================================================================= -->
+        <div class="secondary-toolbar">
+            <!-- Timeframe Selector -->
+            <div class="toolbar-section">
+                <div class="tf-group">
+                    <button class="tf-btn" data-interval="1m">1m</button>
+                    <button class="tf-btn" data-interval="3m">3m</button>
+                    <button class="tf-btn active" data-interval="5m">5m</button>
+                    <button class="tf-btn" data-interval="15m">15m</button>
+                    <button class="tf-btn" data-interval="30m">30m</button>
+                    <button class="tf-btn" data-interval="60m">1h</button>
+                    <button class="tf-btn" data-interval="1d">1D</button>
+                    <button class="tf-btn" data-interval="1wk">1W</button>
+                </div>
+
+                <select id="chart-type-selector" class="select-input-sm" title="Chart Style">
+                    <option value="candlestick">Candlesticks</option>
+                    <option value="hollow">Hollow Candles</option>
+                    <option value="line">Line Chart</option>
+                </select>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- =================================================================
+                 NIFTY STRATEGY: Area with Buy and Sell Buttons + Option Hedging
+                 ================================================================= -->
+            <div class="toolbar-section nifty-strategy-section" id="nifty-strategy-toolbar">
+                <div class="strategy-badge" title="Nifty Futures Hedging Strategy Simulator">
+                    <span class="strategy-badge-icon">⚡</span>
+                    <span class="strategy-badge-text">NIFTY STRATEGY</span>
+                </div>
+                <div class="strategy-btn-group">
+                    <button type="button" id="strategy-buy-trigger" class="strategy-btn btn-strategy-buy" title="Simulate BUY Nifty Future at Live Rate + Hedge with Put Option">
+                        <span class="btn-bullet buy-bullet">▲</span>
+                        <span class="btn-main-label">BUY</span>
+                        <span class="btn-sub-label">FUT + PUT</span>
+                    </button>
+                    <button type="button" id="strategy-sell-trigger" class="strategy-btn btn-strategy-sell" title="Simulate SELL Nifty Future at Live Rate + Hedge with Call Option">
+                        <span class="btn-bullet sell-bullet">▼</span>
+                        <span class="btn-main-label">SELL</span>
+                        <span class="btn-sub-label">FUT + CALL</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Date Range & Old Intraday Session Controls (Primary Visibility) -->
+            <div class="toolbar-section date-range-section">
+                <!-- Quick Intraday / Range Presets -->
+                <div class="range-group">
+                    <button class="range-btn active" data-range="1d" title="Today's Live Intraday Session">Today</button>
+                    <button class="range-btn" id="btn-quick-yesterday" data-range="yesterday" title="Previous Trading Day (Full Intraday)">Yesterday</button>
+                    <button class="range-btn" data-range="5d" title="Last 5 Days">5D</button>
+                    <button class="range-btn" data-range="1mo" title="Last 1 Month">1M</button>
+                    <button class="range-btn" data-range="3mo" title="Last 3 Months">3M</button>
+                    <button class="range-btn" data-range="6mo" title="Last 6 Months">6M</button>
+                    <button class="range-btn" data-range="1y" title="Last 1 Year">1Y</button>
+                    <button class="range-btn" data-range="all" title="All Historical Data">ALL</button>
+                </div>
+
+                <!-- Direct Inline Old Intraday Date Picker -->
+                <div class="inline-date-picker-wrap" title="Pick any past date to load full intraday session (09:15 - 15:30 IST)">
+                    <span class="inline-date-icon">📅</span>
+                    <span class="inline-date-label">Old Intraday:</span>
+                    <input type="date" id="toolbar-single-date" class="toolbar-date-input" title="Choose date for old intraday chart">
+                    <button id="toolbar-go-date-btn" class="toolbar-go-btn" title="View Full Intraday for this Date">Go</button>
+                </div>
+
+                <!-- Custom Date & Range Dropdown Popover Trigger -->
+                <div class="custom-date-dropdown-wrap">
+                    <button id="custom-date-trigger-btn" class="action-btn-sm custom-date-btn" title="Open Advanced Date & Range Dialog (Key: D)">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span>Date / Range ▾</span>
+                    </button>
+
+                    <!-- Custom Date Floating Popover with Tabs -->
+                    <div id="custom-date-panel" class="custom-date-panel" style="display: none;">
+                        <div class="custom-date-panel-header">
+                            <div class="custom-date-tabs">
+                                <button type="button" class="date-tab-btn active" data-tab="single-date">⚡ Old Intraday Date</button>
+                                <button type="button" class="date-tab-btn" data-tab="date-range">📊 Date Range (From - To)</button>
+                            </div>
+                            <button id="close-custom-date-panel-btn" class="popup-close-btn">&times;</button>
+                        </div>
+
+                        <!-- Tab 1: Single Date Intraday -->
+                        <div id="tab-single-date" class="custom-date-tab-content active">
+                            <span class="custom-date-subtitle">Pick any past date to load its complete 09:15 to 15:30 IST session</span>
+                            <div class="custom-date-block">
+                                <label class="custom-date-label">Select Trading Date:</label>
+                                <div class="custom-date-row">
+                                    <input type="date" id="single-date-picker" class="native-date-input">
+                                </div>
+                            </div>
+
+                            <!-- Quick Date Preset Chips -->
+                            <div class="quick-preset-chips-wrap">
+                                <span class="quick-preset-label">Quick Presets:</span>
+                                <div class="quick-preset-chips">
+                                    <button type="button" class="quick-chip-btn" id="chip-yesterday">Yesterday</button>
+                                    <button type="button" class="quick-chip-btn" id="chip-2days">2 Days Ago</button>
+                                    <button type="button" class="quick-chip-btn" id="chip-last-thu">Last Thursday (Expiry)</button>
+                                    <button type="button" class="quick-chip-btn" id="chip-last-fri">Last Friday</button>
+                                    <button type="button" class="quick-chip-btn" id="chip-1week">1 Week Ago</button>
+                                </div>
+                            </div>
+
+                            <!-- Desired Intraday Timeframe -->
+                            <div class="custom-date-block">
+                                <label class="custom-date-label">Intraday Timeframe:</label>
+                                <div class="tf-intraday-chips" id="intraday-tf-choice">
+                                    <button type="button" class="chip-tf-btn" data-tf="1m">1m</button>
+                                    <button type="button" class="chip-tf-btn" data-tf="3m">3m</button>
+                                    <button type="button" class="chip-tf-btn active" data-tf="5m">5m (Standard)</button>
+                                    <button type="button" class="chip-tf-btn" data-tf="15m">15m</button>
+                                </div>
+                            </div>
+
+                            <button id="apply-single-date-btn" class="action-btn-sm action-btn-apply-full">
+                                ⚡ Load Historical Intraday Session
+                            </button>
+                        </div>
+
+                        <!-- Tab 2: Custom Date Range -->
+                        <div id="tab-date-range" class="custom-date-tab-content" style="display: none;">
+                            <span class="custom-date-subtitle">Inspect historical swing trends across a custom date window</span>
+                            <div class="custom-date-range-fields">
+                                <div class="date-field-group">
+                                    <span>From Date:</span>
+                                    <input type="date" id="date-range-from" class="native-date-input">
+                                </div>
+                                <div class="date-field-group">
+                                    <span>To Date:</span>
+                                    <input type="date" id="date-range-to" class="native-date-input">
+                                </div>
+                            </div>
+
+                            <!-- Range Preset Chips -->
+                            <div class="quick-preset-chips-wrap">
+                                <span class="quick-preset-label">Quick Range Presets:</span>
+                                <div class="quick-preset-chips">
+                                    <button type="button" class="quick-chip-btn" id="chip-range-5d">Last 5 Days</button>
+                                    <button type="button" class="quick-chip-btn" id="chip-range-15d">Last 15 Days</button>
+                                    <button type="button" class="quick-chip-btn" id="chip-range-1m">1 Month</button>
+                                    <button type="button" class="quick-chip-btn" id="chip-range-3m">3 Months</button>
+                                    <button type="button" class="quick-chip-btn" id="chip-range-6m">6 Months</button>
+                                    <button type="button" class="quick-chip-btn" id="chip-range-1y">1 Year</button>
+                                    <button type="button" class="quick-chip-btn" id="chip-range-ytd">YTD</button>
+                                </div>
+                            </div>
+
+                            <!-- Range Timeframe -->
+                            <div class="custom-date-block">
+                                <label class="custom-date-label">Range Timeframe:</label>
+                                <div class="tf-intraday-chips" id="range-tf-choice">
+                                    <button type="button" class="chip-tf-btn" data-tf="15m">15m</button>
+                                    <button type="button" class="chip-tf-btn" data-tf="60m">1h</button>
+                                    <button type="button" class="chip-tf-btn active" data-tf="1d">1D (Daily)</button>
+                                    <button type="button" class="chip-tf-btn" data-tf="1wk">1W (Weekly)</button>
+                                </div>
+                            </div>
+
+                            <button id="apply-range-btn" class="action-btn-sm action-btn-apply-full">
+                                📊 Apply Date Range
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="reset-live-btn" class="action-btn-sm action-btn-reset" title="Reset back to Live Today Intraday">
+                    <span class="live-dot-mini"></span> Live Today
+                </button>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Technical Indicators Section -->
+            <div class="toolbar-section indicators-section">
+                <!-- Dropdown Trigger for Full Technical Studies Suite -->
+                <div class="indicators-dropdown-wrap">
+                    <button id="indicators-dropdown-trigger" class="action-btn-sm ind-menu-trigger-btn" title="View & Toggle All Technical Indicators">
+                        <span class="fx-symbol">fx</span>
+                        <span class="ind-trigger-text">Indicators</span>
+                        <span id="ind-active-count-badge" class="ind-count-badge">4</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+
+                    <!-- Indicators Popup Menu Modal -->
+                    <div id="indicators-dropdown-panel" class="indicators-popup-panel" style="display: none;">
+                        <div class="ind-popup-header">
+                            <div class="ind-popup-title-row">
+                                <span class="ind-popup-title"><b style="color: var(--color-cyan);">fx</b> Technical Studies</span>
+                                <button id="close-ind-popup-btn" class="popup-close-btn">&times;</button>
+                            </div>
+                            <span class="ind-popup-subtitle">Click to toggle overlay indicators & subcharts</span>
+                        </div>
+
+                        <div class="ind-popup-body">
+                            <!-- Category 0: Proprietary Flagship Quant Indicator -->
+                            <div class="ind-category-group ind-category-apex">
+                                <div class="ind-category-label" style="color: var(--color-cyan); display: flex; align-items: center; justify-content: space-between;">
+                                    <span>★ Proprietary Quant & AI Synthesis</span>
+                                    <span class="flagship-pill">FLAGSHIP</span>
+                                </div>
+                                <div class="ind-items-list">
+                                    <div class="ind-menu-item ind-toggle-btn active" data-indicator="apex">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name" style="color: var(--color-cyan); font-weight: 600;">Apex Quantum Matrix™ (AQM)</span>
+                                            <span class="ind-item-desc">Hull-VWAP Baseline + Golden Volatility Envelope + Carter Squeeze Engine + CMI Subchart</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Category 1: Trend Overlays -->
+                            <div class="ind-category-group">
+                                <div class="ind-category-label">Trend & Volume-Weighted</div>
+                                <div class="ind-items-list">
+                                    <div class="ind-menu-item ind-toggle-btn active" data-indicator="supertrend">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">Supertrend (10, 3)</span>
+                                            <span class="ind-item-desc">Trend direction signals with dynamic stop-loss</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                    <div class="ind-menu-item ind-toggle-btn active" data-indicator="vwap">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">Anchored VWAP (IST)</span>
+                                            <span class="ind-item-desc">Volume-Weighted Average Price resetting at open</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                    <div class="ind-menu-item ind-toggle-btn" data-indicator="ema9">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">EMA 9 (Fast Trend)</span>
+                                            <span class="ind-item-desc">9-period Exponential Moving Average</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                    <div class="ind-menu-item ind-toggle-btn" data-indicator="ema21">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">EMA 21 (Pullback Support)</span>
+                                            <span class="ind-item-desc">21-period Exponential Moving Average</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                    <div class="ind-menu-item ind-toggle-btn" data-indicator="ema50">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">EMA 50 (Intermediate)</span>
+                                            <span class="ind-item-desc">50-period Exponential Moving Average</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                    <div class="ind-menu-item ind-toggle-btn" data-indicator="sma200">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">SMA 200 (Major Trend)</span>
+                                            <span class="ind-item-desc">200-period Simple Moving Average</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Category 2: Levels & Volatility -->
+                            <div class="ind-category-group">
+                                <div class="ind-category-label">Key Levels & Volatility</div>
+                                <div class="ind-items-list">
+                                    <div class="ind-menu-item ind-toggle-btn active" data-indicator="pivots">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">Classic Pivot Points</span>
+                                            <span class="ind-item-desc">Floor pivots: P, S1, S2, R1, R2</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                    <div class="ind-menu-item ind-toggle-btn active" data-indicator="volume">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">Volume Bars</span>
+                                            <span class="ind-item-desc">Trading volume histogram overlay</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                    <div class="ind-menu-item ind-toggle-btn" data-indicator="bollinger">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">Bollinger Bands (20, 2)</span>
+                                            <span class="ind-item-desc">20 SMA ± 2 standard deviations</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Category 3: Oscillators Subcharts -->
+                            <div class="ind-category-group">
+                                <div class="ind-category-label">Oscillators (Subcharts)</div>
+                                <div class="ind-items-list">
+                                    <div class="ind-menu-item ind-toggle-btn" data-indicator="rsi">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">RSI (14)</span>
+                                            <span class="ind-item-desc">Relative Strength Index with 70/30 bands</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                    <div class="ind-menu-item ind-toggle-btn" data-indicator="macd">
+                                        <div class="ind-item-info">
+                                            <span class="ind-item-name">MACD (12, 26, 9)</span>
+                                            <span class="ind-item-desc">Moving Average Convergence Divergence</span>
+                                        </div>
+                                        <span class="ind-item-check">✓</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick-Toggle Indicator Chips for Instant One-Click Access -->
+                <div class="ind-quick-chips">
+                    <button class="ind-toggle-btn active apex-chip" data-indicator="apex" title="Toggle Apex Quantum Matrix™ (Hull-VWAP + Squeeze + CMI Subchart)">★ Apex Matrix</button>
+                    <button class="ind-toggle-btn active" data-indicator="supertrend" title="Toggle Supertrend (10, 3)">ST (10,3)</button>
+                    <button class="ind-toggle-btn active" data-indicator="pivots" title="Toggle Pivots (S1/S2/R1/R2)">Pivots</button>
+                    <button class="ind-toggle-btn active" data-indicator="vwap" title="Toggle Anchored VWAP">VWAP</button>
+                    <button class="ind-toggle-btn active" data-indicator="volume" title="Toggle Volume">Vol</button>
+                    <button class="ind-toggle-btn" data-indicator="rsi" title="Toggle RSI Subchart">RSI</button>
+                    <button class="ind-toggle-btn" data-indicator="macd" title="Toggle MACD Subchart">MACD</button>
+                    <button class="ind-toggle-btn" data-indicator="bollinger" title="Toggle Bollinger Bands">BB</button>
+                    <button class="ind-toggle-btn" data-indicator="ema9" title="Toggle EMA 9">EMA 9</button>
+                    <button class="ind-toggle-btn" data-indicator="ema21" title="Toggle EMA 21">EMA 21</button>
+                </div>
+
+                <!-- Apex Blueprint Strategy Trigger Button -->
+                <button id="open-apex-blueprint-btn" class="action-btn-sm ind-blueprint-btn" title="View Apex Indicator Mathematical Blueprint & Trading Strategy">
+                    <span style="color: #ffd166;">★</span> Blueprint
+                </button>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Drawing Tools -->
+            <div class="toolbar-section">
+                <button class="drawing-tool-btn active" data-tool="cursor" title="Crosshair Cursor">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="22" y1="12" x2="18" y2="12"></line>
+                        <line x1="6" y1="12" x2="2" y2="12"></line>
+                        <line x1="12" y1="6" x2="12" y2="2"></line>
+                        <line x1="12" y1="22" x2="12" y2="18"></line>
+                    </svg>
+                </button>
+                <button class="drawing-tool-btn" data-tool="trendline" title="Draw Trendline">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="4" y1="20" x2="20" y2="4"></line>
+                    </svg>
+                </button>
+                <button class="drawing-tool-btn" data-tool="horizontal" title="Draw Horizontal Support/Resistance Level">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                    </svg>
+                </button>
+                <button class="drawing-tool-btn" data-tool="fibonacci" title="Draw Fibonacci Retracement">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="2" y1="5" x2="22" y2="5"></line>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <line x1="2" y1="19" x2="22" y2="19"></line>
+                    </svg>
+                </button>
+                <button class="drawing-tool-btn" data-tool="undo" title="Undo Drawing">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 7v6h6"></path>
+                        <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+                    </svg>
+                </button>
+                <button class="drawing-tool-btn" data-tool="clear" title="Clear All Drawings">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- =================================================================
+             Main Workspace: Left Watchlist, Center Full Scale Chart, Right Tech Study
+             ================================================================= -->
+        <main class="workspace-container">
+            <!-- Left Sidebar: Pro Control Deck (Nifty Strategy, Indicators, Old Intraday, Date Range) -->
+            <aside id="watchlist-sidebar" class="watchlist-sidebar control-deck-sidebar">
+                <div class="deck-header">
+                    <div class="deck-title-row">
+                        <div class="deck-brand">
+                            <span class="deck-icon">⚡</span>
+                            <span class="deck-title">CONTROL DECK</span>
+                        </div>
+                        <span class="deck-live-badge"><span class="pulse-dot"></span> LIVE RATES</span>
+                    </div>
+                </div>
+
+                <div class="deck-scrollable-content">
+                    <!-- 1. LIVE NIFTY MARKET PULSE & STATUS -->
+                    <div class="deck-card deck-card-live" id="sidebar-live-card">
+                        <div class="deck-card-header">
+                            <span class="card-label">BENCHMARK LIVE PULSE</span>
+                            <span class="symbol-tag">NIFTY 50</span>
+                        </div>
+                        <div class="sidebar-live-price-row">
+                            <span id="sidebar-spot-price" class="sidebar-live-price font-mono">₹25,030.35</span>
+                            <span id="sidebar-spot-chg" class="price-change-pill pill-up">+493.75 (+2.01%)</span>
+                        </div>
+                        <div class="sidebar-futures-live-row">
+                            <div class="fut-live-item">
+                                <span class="fut-label">CURRENT FUT:</span>
+                                <span id="sidebar-fut-price" class="fut-val font-mono highlight-cyan">₹25,040.45</span>
+                            </div>
+                            <div class="fut-live-item">
+                                <span class="fut-label">BASIS:</span>
+                                <span id="sidebar-fut-basis" class="fut-val font-mono highlight-gold">+10.10 pts</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. NIFTY STRATEGY & HEDGING -->
+                    <div class="deck-card deck-card-strategy">
+                        <div class="deck-card-header">
+                            <div class="card-title-group">
+                                <span class="deck-sparkle">⚡</span>
+                                <span class="card-title">NIFTY STRATEGY</span>
+                            </div>
+                            <span class="strategy-active-tag">HEDGED FUTURES</span>
+                        </div>
+                        <p class="card-caption">Simulate live month futures trade with strictly capped max loss hedging.</p>
+                        
+                        <div class="sidebar-strategy-actions">
+                            <button type="button" id="sidebar-strat-buy-btn" class="sidebar-strat-btn btn-strat-buy" title="Simulate BUY Nifty Future + Protective Put Hedge">
+                                <span class="action-arrow">▲</span>
+                                <div class="action-text-wrap">
+                                    <span class="action-main">BUY FUT</span>
+                                    <span class="action-sub">+ BUY PUT HEDGE</span>
+                                </div>
+                            </button>
+                            <button type="button" id="sidebar-strat-sell-btn" class="sidebar-strat-btn btn-strat-sell" title="Simulate SELL Nifty Future + Protective Call Hedge">
+                                <span class="action-arrow">▼</span>
+                                <div class="action-text-wrap">
+                                    <span class="action-main">SELL FUT</span>
+                                    <span class="action-sub">+ BUY CALL HEDGE</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Quick Mini Risk Preview Card -->
+                        <div class="sidebar-strategy-preview-box">
+                            <div class="preview-metric">
+                                <span class="metric-lbl">Risk Protection:</span>
+                                <span class="metric-val text-down font-mono font-bold">100% Capped Max Loss</span>
+                            </div>
+                            <div class="preview-metric">
+                                <span class="metric-lbl">Hedge Derivative:</span>
+                                <span class="metric-val text-up font-mono">Protective Put / Call</span>
+                            </div>
+                            <button type="button" id="sidebar-open-strategy-modal" class="sidebar-link-btn">
+                                <span>Open Full Options Hedging Calculator ↗</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3. OLD INTRADAY SESSION SELECTOR -->
+                    <div class="deck-card deck-card-intraday">
+                        <div class="deck-card-header">
+                            <div class="card-title-group">
+                                <span>📅</span>
+                                <span class="card-title">OLD INTRADAY SESSION</span>
+                            </div>
+                            <span class="intraday-timing-pill">09:15 - 15:30 IST</span>
+                        </div>
+                        <p class="card-caption">Load any past date's complete intraday trading session on full chart.</p>
+
+                        <div class="deck-input-group">
+                            <label class="deck-field-label">Select Trading Date:</label>
+                            <div class="deck-date-input-wrap">
+                                <span class="deck-input-icon">📅</span>
+                                <input type="date" id="sidebar-single-date" class="deck-native-date-input">
+                            </div>
+                        </div>
+
+                        <!-- Quick Date Presets -->
+                        <div class="deck-chips-group">
+                            <span class="chips-label">Quick Presets:</span>
+                            <div class="deck-chips-row">
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-yesterday">Yesterday</button>
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-2days">2 Days Ago</button>
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-last-thu">Last Expiry</button>
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-last-fri">Last Fri</button>
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-1week">1 Wk Ago</button>
+                            </div>
+                        </div>
+
+                        <!-- Intraday Timeframe Selection -->
+                        <div class="deck-tf-group">
+                            <span class="chips-label">Intraday Bar Timeframe:</span>
+                            <div class="deck-tf-chips" id="sidebar-intraday-tf-chips">
+                                <button type="button" class="deck-tf-btn" data-tf="1m">1m</button>
+                                <button type="button" class="deck-tf-btn" data-tf="3m">3m</button>
+                                <button type="button" class="deck-tf-btn active" data-tf="5m">5m (Std)</button>
+                                <button type="button" class="deck-tf-btn" data-tf="15m">15m</button>
+                            </div>
+                        </div>
+
+                        <div class="deck-card-actions">
+                            <button type="button" id="sidebar-apply-intraday-btn" class="deck-action-btn action-primary">
+                                ⚡ Load Historical Intraday
+                            </button>
+                            <button type="button" id="sidebar-reset-live-btn" class="deck-action-btn action-secondary" title="Return to Live Today">
+                                <span class="live-dot-mini"></span> Return to Live
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4. DATE RANGE SELECTOR (From - To) -->
+                    <div class="deck-card deck-card-range">
+                        <div class="deck-card-header">
+                            <div class="card-title-group">
+                                <span>📊</span>
+                                <span class="card-title">DATE RANGE (SWING)</span>
+                            </div>
+                            <span class="range-mode-pill">MULTI-DAY</span>
+                        </div>
+                        <p class="card-caption">Inspect historical swings & trends across a custom date window.</p>
+
+                        <div class="deck-range-fields-grid">
+                            <div class="deck-input-group">
+                                <label class="deck-field-label">From Date:</label>
+                                <input type="date" id="sidebar-date-from" class="deck-native-date-input">
+                            </div>
+                            <div class="deck-input-group">
+                                <label class="deck-field-label">To Date:</label>
+                                <input type="date" id="sidebar-date-to" class="deck-native-date-input">
+                            </div>
+                        </div>
+
+                        <!-- Range Presets -->
+                        <div class="deck-chips-group">
+                            <span class="chips-label">Range Presets:</span>
+                            <div class="deck-chips-row">
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-range-5d">5D</button>
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-range-15d">15D</button>
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-range-1m">1M</button>
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-range-3m">3M</button>
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-range-6m">6M</button>
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-range-1y">1Y</button>
+                                <button type="button" class="deck-chip-btn" id="sidebar-chip-range-ytd">YTD</button>
+                            </div>
+                        </div>
+
+                        <!-- Range Timeframe -->
+                        <div class="deck-tf-group">
+                            <span class="chips-label">Range Bar Size:</span>
+                            <div class="deck-tf-chips" id="sidebar-range-tf-chips">
+                                <button type="button" class="deck-tf-btn" data-tf="15m">15m</button>
+                                <button type="button" class="deck-tf-btn" data-tf="60m">1h</button>
+                                <button type="button" class="deck-tf-btn active" data-tf="1d">1D (Daily)</button>
+                                <button type="button" class="deck-tf-btn" data-tf="1wk">1W (Weekly)</button>
+                            </div>
+                        </div>
+
+                        <button type="button" id="sidebar-apply-range-btn" class="deck-action-btn action-apply-range">
+                            📊 Apply Date Range
+                        </button>
+                    </div>
+
+                    <!-- 5. TECHNICAL INDICATORS SUITE -->
+                    <div class="deck-card deck-card-indicators">
+                        <div class="deck-card-header">
+                            <div class="card-title-group">
+                                <span class="fx-symbol-mini">fx</span>
+                                <span class="card-title">TECHNICAL STUDIES</span>
+                            </div>
+                            <span id="sidebar-ind-active-count" class="ind-count-badge">5 Active</span>
+                        </div>
+                        <p class="card-caption">Toggle mathematical overlay indicators and subcharts on the fly.</p>
+
+                        <div class="deck-indicators-list">
+                            <!-- Apex Quantum Matrix -->
+                            <div class="deck-ind-row ind-row-apex ind-toggle-btn active" data-indicator="apex">
+                                <div class="ind-row-left">
+                                    <div class="ind-row-title">
+                                        <span class="star-apex">★</span>
+                                        <span class="name-bold highlight-cyan">Apex Quantum Matrix™</span>
+                                    </div>
+                                    <span class="ind-row-sub">Hull-VWAP + Squeeze + CMI Subchart</span>
+                                </div>
+                                <div class="ind-row-right">
+                                    <button type="button" id="sidebar-apex-blueprint-btn" class="mini-blueprint-link" title="Open Mathematical Blueprint">Blueprint</button>
+                                    <div class="custom-switch on"></div>
+                                </div>
+                            </div>
+
+                            <!-- Supertrend -->
+                            <div class="deck-ind-row ind-toggle-btn active" data-indicator="supertrend">
+                                <div class="ind-row-left">
+                                    <span class="name-bold">Supertrend (10, 3)</span>
+                                    <span class="ind-row-sub">Dynamic Stop-Loss & Trend Signals</span>
+                                </div>
+                                <div class="custom-switch on"></div>
+                            </div>
+
+                            <!-- Pivot Points -->
+                            <div class="deck-ind-row ind-toggle-btn active" data-indicator="pivots">
+                                <div class="ind-row-left">
+                                    <span class="name-bold">Pivot Points (Classical)</span>
+                                    <span class="ind-row-sub">S1, S2, R1, R2 Support/Resistance</span>
+                                </div>
+                                <div class="custom-switch on"></div>
+                            </div>
+
+                            <!-- Anchored VWAP -->
+                            <div class="deck-ind-row ind-toggle-btn active" data-indicator="vwap">
+                                <div class="ind-row-left">
+                                    <span class="name-bold">Anchored VWAP</span>
+                                    <span class="ind-row-sub">Intraday Volume-Weighted Fair Value</span>
+                                </div>
+                                <div class="custom-switch on"></div>
+                            </div>
+
+                            <!-- Volume -->
+                            <div class="deck-ind-row ind-toggle-btn active" data-indicator="volume">
+                                <div class="ind-row-left">
+                                    <span class="name-bold">Volume Bars</span>
+                                    <span class="ind-row-sub">Color-Coded Volume + SMA(20)</span>
+                                </div>
+                                <div class="custom-switch on"></div>
+                            </div>
+
+                            <!-- RSI Subchart -->
+                            <div class="deck-ind-row ind-toggle-btn" data-indicator="rsi">
+                                <div class="ind-row-left">
+                                    <span class="name-bold">RSI Subchart (14)</span>
+                                    <span class="ind-row-sub">Relative Strength Index (30/70 Zones)</span>
+                                </div>
+                                <div class="custom-switch"></div>
+                            </div>
+
+                            <!-- MACD Subchart -->
+                            <div class="deck-ind-row ind-toggle-btn" data-indicator="macd">
+                                <div class="ind-row-left">
+                                    <span class="name-bold">MACD Subchart (12, 26, 9)</span>
+                                    <span class="ind-row-sub">Moving Average Convergence Divergence</span>
+                                </div>
+                                <div class="custom-switch"></div>
+                            </div>
+
+                            <!-- Bollinger Bands -->
+                            <div class="deck-ind-row ind-toggle-btn" data-indicator="bollinger">
+                                <div class="ind-row-left">
+                                    <span class="name-bold">Bollinger Bands (20, 2.0σ)</span>
+                                    <span class="ind-row-sub">Standard Deviation Volatility Envelope</span>
+                                </div>
+                                <div class="custom-switch"></div>
+                            </div>
+
+                            <!-- EMA 9 -->
+                            <div class="deck-ind-row ind-toggle-btn" data-indicator="ema9">
+                                <div class="ind-row-left">
+                                    <span class="name-bold">EMA 9 (Fast Exponential)</span>
+                                    <span class="ind-row-sub">Short-term kinetic momentum</span>
+                                </div>
+                                <div class="custom-switch"></div>
+                            </div>
+
+                            <!-- EMA 21 -->
+                            <div class="deck-ind-row ind-toggle-btn" data-indicator="ema21">
+                                <div class="ind-row-left">
+                                    <span class="name-bold">EMA 21 (Trend Baseline)</span>
+                                    <span class="ind-row-sub">Medium-term trend direction</span>
+                                </div>
+                                <div class="custom-switch"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center Viewport: Full Chart Scale Area -->
+            <section id="chart-workspace-wrapper" class="chart-workspace-wrapper">
+                <!-- Top OHLCV HUD Bar -->
+                <div class="chart-hud-bar">
+                    <div class="hud-left">
+                        <div class="hud-stat hud-date-stat">
+                            <span class="hud-label">Date:</span>
+                            <span id="hud-date" class="hud-val font-mono" style="color: var(--color-cyan); font-weight: 600;">--</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">Time (IST):</span>
+                            <span id="hud-time" class="hud-val font-mono" style="color: var(--text-primary);">--:-- IST</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">O:</span>
+                            <span id="hud-o" class="hud-val font-mono">22,680.00</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">H:</span>
+                            <span id="hud-h" class="hud-val font-mono">22,750.10</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">L:</span>
+                            <span id="hud-l" class="hud-val font-mono">22,640.20</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">C:</span>
+                            <span id="hud-c" class="hud-val font-mono text-up">22,710.00</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">Chg:</span>
+                            <span id="hud-chg" class="hud-val font-mono text-up">+85.20 (+0.38%)</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">Vol:</span>
+                            <span id="hud-vol" class="hud-val font-mono">14.2 M</span>
+                        </div>
+                    </div>
+                    <div class="hud-right">
+                        <span class="hud-indicator-tag hud-apex-tag" style="border-color: rgba(0,212,255,0.4); background: rgba(0,212,255,0.06);">Apex Matrix: <b id="hud-apex" style="color: var(--color-cyan);">Active</b></span>
+                        <span class="hud-indicator-tag">ST (10,3): <b id="hud-supertrend" class="text-up">Active</b></span>
+                        <span class="hud-indicator-tag">Pivots: <b id="hud-pivots" style="color: #ffd166;">S1/S2/R1/R2</b></span>
+                        <span class="hud-indicator-tag">VWAP: <b id="hud-vwap" style="color: var(--color-cyan);">Active</b></span>
+                    </div>
+                </div>
+
+                <!-- Active Historical Intraday Session / Date Range Navigator Banner -->
+                <div id="historical-session-banner" class="historical-session-banner" style="display: none;">
+                    <div class="session-banner-left">
+                        <span class="session-badge" id="session-badge-type">HISTORICAL INTRADAY</span>
+                        <span id="session-banner-info" class="session-info-text">Selected Date • Full Session (09:15 - 15:30 IST)</span>
+                    </div>
+                    <div class="session-banner-nav" id="session-banner-nav">
+                        <button type="button" id="banner-prev-day-btn" class="session-nav-btn" title="Jump to Previous Trading Day (◀)">◀ Prev Day</button>
+                        <div class="banner-date-wrap">
+                            <span class="banner-date-icon">📅</span>
+                            <input type="date" id="banner-date-picker" class="banner-date-input" title="Change Intraday Date">
+                        </div>
+                        <button type="button" id="banner-next-day-btn" class="session-nav-btn" title="Jump to Next Trading Day (▶)">Next Day ▶</button>
+                    </div>
+                    <div class="session-banner-right">
+                        <button type="button" id="banner-live-btn" class="session-return-live-btn" title="Return to Live Today Market">
+                            <span class="pulse-dot"></span> Return to Live
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Chart Viewport -->
+                <div class="chart-viewport">
+                    <!-- Lightweight Charts Canvas Container -->
+                    <div id="main-chart-container"></div>
+
+                    <!-- Transparent Drawing Canvas Overlay -->
+                    <canvas id="drawing-canvas"></canvas>
+
+                    <!-- Loading Spinner Overlay -->
+                    <div id="chart-loading-overlay" class="chart-loading-overlay" style="display: none;">
+                        <div class="spinner"></div>
+                        <span class="loading-text">Fetching Live Market Candles...</span>
+                    </div>
+                </div>
+
+                <!-- Synchronized Subchart Panes -->
+                <div id="apex-chart-container"></div>
+                <div id="rsi-chart-container"></div>
+                <div id="macd-chart-container"></div>
+            </section>
+
+            <!-- Right Sidebar: Technical Study Analysis Panel -->
+            <aside id="tech-study-panel" class="tech-study-panel">
+                <div class="tech-panel-header">
+                    <span class="tech-panel-title">Technical Study</span>
+                    <span class="kbd-shortcut">Live Analysis</span>
+                </div>
+                <div id="tech-summary-container" class="tech-summary-content">
+                    <!-- Dynamically rendered by TechnicalSummaryPanel -->
+                </div>
+            </aside>
+        </main>
+
+        <!-- =================================================================
+             Bottom Footer & Live Marquee Strip
+             ================================================================= -->
+        <footer class="terminal-footer">
+            <div class="footer-left">
+                <div class="connection-status">
+                    <span class="conn-dot"></span>
+                    <span>NSE Realtime Data • 1.2s Tick</span>
+                </div>
+                <span id="ist-clock" class="font-mono" style="color: var(--color-cyan);">IST 09:15:00</span>
+            </div>
+
+            <div class="footer-center">
+                <span>Use <b>Date / Range Controls</b> above to inspect any past date intraday session on full chart scale.</span>
+            </div>
+
+            <div class="footer-right">
+                <div class="shortcut-hint">
+                    <span class="kbd-shortcut">Ctrl+K</span>
+                    <span>Search</span>
+                </div>
+                <div class="shortcut-hint">
+                    <span class="kbd-shortcut">1-5</span>
+                    <span>Timeframes</span>
+                </div>
+            </div>
+        </footer>
+
+        <!-- =================================================================
+             Command Palette Search Modal (Ctrl + K)
+             ================================================================= -->
+        <div id="search-backdrop" class="modal-backdrop"></div>
+        <div id="search-modal" class="search-modal">
+            <div class="search-modal-header">
+                <svg class="search-modal-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="search-input" class="search-modal-input" placeholder="Search Index, Stock, or Sector (e.g. NIFTY, RELIANCE, TCS, Banking)..." autocomplete="off">
+                <button id="close-search-modal" class="icon-btn" title="Close (Esc)">✕</button>
+            </div>
+
+            <div class="search-filter-tabs">
+                <button class="search-filter-chip active" data-category="all">All (60+)</button>
+                <button class="search-filter-chip" data-category="indices">Indices</button>
+                <button class="search-filter-chip" data-category="equities">Equities</button>
+                <button class="search-filter-chip" data-category="banking">Banking</button>
+                <button class="search-filter-chip" data-category="it">IT</button>
+                <button class="search-filter-chip" data-category="energy">Energy</button>
+                <button class="search-filter-chip" data-category="auto">Auto</button>
+                <button class="search-filter-chip" data-category="pharma">Pharma</button>
+                <button class="search-filter-chip" data-category="fmcg">FMCG</button>
+                <button class="search-filter-chip" data-category="metals">Metals</button>
+            </div>
+
+            <ul id="search-results" class="search-results-list">
+                <!-- Dynamically populated by SearchModal -->
+            </ul>
+        </div>
+
+        <!-- =================================================================
+             Apex Quantum Matrix™ (AQM) Blueprint & Strategy Modal
+             ================================================================= -->
+        <div id="apex-blueprint-backdrop" class="modal-backdrop"></div>
+        <div id="apex-blueprint-modal" class="apex-blueprint-modal" style="display: none;">
+            <div class="blueprint-modal-header">
+                <div class="blueprint-title-wrap">
+                    <div class="blueprint-badge">PROPRIETARY QUANT SYSTEM</div>
+                    <h2><span style="color: var(--color-cyan);">APEX</span> QUANTUM MATRIX™ (AQM)</h2>
+                    <p class="blueprint-subtitle">An institutional-grade 4-pillar indicator engineered by synthesizing the mathematical strengths of the world's best technical studies.</p>
+                </div>
+                <button id="close-apex-blueprint-btn" class="icon-btn" title="Close (Esc)">✕</button>
+            </div>
+
+            <div class="blueprint-modal-body">
+                <!-- Why It Was Created & Problem Statement -->
+                <div class="blueprint-section-hero">
+                    <div class="hero-card">
+                        <span class="hero-card-tag">THE PROBLEM WITH CLASSICAL INDICATORS</span>
+                        <p>Individual indicators operate in a silo: <b>Moving averages lag</b> behind swift turns, <b>Supertrend whipsaws</b> in consolidation, <b>RSI remains stuck</b> in strong trends, and <b>MACD is too sluggish</b> for intraday momentum. <b>Apex Quantum Matrix™</b> eliminates these flaws by establishing a multi-dimensional confluence of <b>Volume, Momentum, Volatility Compression, and Trend</b>.</p>
+                    </div>
+                </div>
+
+                <!-- 4 Mathematical Pillars Grid -->
+                <h3 class="blueprint-section-heading">Architectural Pillars & Mathematics</h3>
+                <div class="blueprint-pillars-grid">
+                    <div class="pillar-card">
+                        <div class="pillar-header">
+                            <span class="pillar-num">01</span>
+                            <h4>Adaptive Hull-VWAP Baseline</h4>
+                        </div>
+                        <div class="pillar-formula">Baseline = 0.60 × HMA(16) + 0.40 × Anchored VWAP</div>
+                        <p>Combines zero-lag <b>Hull Moving Average</b> with institutional <b>Volume-Weighted Fair Value</b> to define the undisputed market regime. Eliminates standard moving average delay.</p>
+                        <div class="pillar-metric">Regime Filter: Price &gt; Baseline = Bullish | Price &lt; Baseline = Bearish</div>
+                    </div>
+
+                    <div class="pillar-card">
+                        <div class="pillar-header">
+                            <span class="pillar-num">02</span>
+                            <h4>Golden Volatility Envelope (±1.618σ)</h4>
+                        </div>
+                        <div class="pillar-formula">Upper/Lower Bands = Baseline ± (1.618 × ATR₁₄)</div>
+                        <p>Dynamic volatility bands that expand and contract using the <b>Golden Ratio (φ = 1.618)</b> scaled by Average True Range. Acts as institutional mean-reversion boundary.</p>
+                        <div class="pillar-metric">Reversal Band: Dynamic Target 1 &amp; Exhaustion Guard</div>
+                    </div>
+
+                    <div class="pillar-card">
+                        <div class="pillar-header">
+                            <span class="pillar-num">03</span>
+                            <h4>Volatility Squeeze Engine</h4>
+                        </div>
+                        <div class="pillar-formula">Squeeze ON = BB(20, 2.0σ) inside KC(20, 1.5×ATR)</div>
+                        <p>Detects energy compression before explosive price expansion (Carter Squeeze Pro). When volatility contracts, false breakout signals are suppressed until the squeeze releases.</p>
+                        <div class="pillar-metric">Squeeze Dot: Orange = Coiling | Cyan/Green = Detonation Fired</div>
+                    </div>
+
+                    <div class="pillar-card">
+                        <div class="pillar-header">
+                            <span class="pillar-num">04</span>
+                            <h4>Composite Momentum Index (CMI)</h4>
+                        </div>
+                        <div class="pillar-formula">CMI = 0.65 × RSI₁₄ + 0.35 × (50 + 50 × tanh(ΔP / ATR))</div>
+                        <p>A dual-engine oscillator that combines Wilder's RSI with volume-distance momentum. Coupled with a 4-state dual-color momentum wave that signals acceleration vs exhaustion.</p>
+                        <div class="pillar-metric">Momentum Spectrum: 0 to 100 | Bullish Zone: &gt; 50 | Acceleration: 4-color wave</div>
+                    </div>
+                </div>
+
+                <!-- Signal Confluence Checklist & Dynamic R:R Strategy -->
+                <h3 class="blueprint-section-heading">Algorithmic Execution Rules & Dynamic Risk:Reward</h3>
+                <div class="blueprint-strategy-cards">
+                    <div class="strategy-card buy-rule">
+                        <div class="strategy-badge buy-badge">APEX BUY IGNITION (🚀 LONG)</div>
+                        <ul class="rule-checklist">
+                            <li><span class="check-icon">✓</span> <b>Regime Alignment:</b> Price trading above or crossing above the Adaptive Hull-VWAP Baseline.</li>
+                            <li><span class="check-icon">✓</span> <b>Kinetic Momentum:</b> Momentum Wave Histogram &gt; 0 with expanding green bars (accelerating).</li>
+                            <li><span class="check-icon">✓</span> <b>Squeeze Ignition:</b> Squeeze released or CMI &gt; 50 with rising trajectory.</li>
+                            <li><span class="check-icon">✓</span> <b>Volume Confirmation:</b> Current bar volume &gt; 85% of 20-period Volume SMA.</li>
+                            <li><span class="check-icon">✓</span> <b>Execution Target:</b> Stop Loss at Entry − 1.5×ATR, Target 1 at +1.5×ATR (1.5R), Target 2 at +3.0×ATR (3.0R).</li>
+                        </ul>
+                    </div>
+
+                    <div class="strategy-card sell-rule">
+                        <div class="strategy-badge sell-badge">APEX SELL IGNITION (🔻 SHORT)</div>
+                        <ul class="rule-checklist">
+                            <li><span class="check-icon">✓</span> <b>Regime Alignment:</b> Price trading below or crossing below the Adaptive Hull-VWAP Baseline.</li>
+                            <li><span class="check-icon">✓</span> <b>Kinetic Momentum:</b> Momentum Wave Histogram &lt; 0 with expanding crimson bars (accelerating).</li>
+                            <li><span class="check-icon">✓</span> <b>Squeeze Ignition:</b> Squeeze released downwards or CMI &lt; 50 with falling trajectory.</li>
+                            <li><span class="check-icon">✓</span> <b>Volume Confirmation:</b> Current bar volume &gt; 85% of 20-period Volume SMA.</li>
+                            <li><span class="check-icon">✓</span> <b>Execution Target:</b> Stop Loss at Entry + 1.5×ATR, Target 1 at −1.5×ATR (1.5R), Target 2 at −3.0×ATR (3.0R).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Live Parameter Calibration -->
+                <div class="blueprint-footer-controls">
+                    <div class="calibration-summary">
+                        <span>Active Parameters: <b>HMA(16)</b> • <b>VWAP(Daily IST)</b> • <b>BB(20, 2.0)</b> • <b>KC(20, 1.5)</b> • <b>ATR(14)</b> • <b>Golden Ratio φ=1.618</b></span>
+                    </div>
+                    <button id="toggle-apex-from-modal-btn" class="action-btn-sm" style="background: var(--color-cyan); color: #0a0d14; font-weight: 600; padding: 8px 16px;">
+                        Toggle Apex on Chart
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================
+             Nifty Strategy & Option Hedging Popup Window (Modal)
+             ================================================================= -->
+        <div id="nifty-strategy-backdrop" class="modal-backdrop"></div>
+        <div id="nifty-strategy-modal" class="nifty-strategy-modal" style="display: none;">
+            <div class="strategy-modal-header">
+                <div class="strat-title-wrap">
+                    <div class="strat-badge-pill">FUTURES &amp; OPTION HEDGING SIMULATOR</div>
+                    <h2><span style="color: var(--color-cyan);">NIFTY</span> STRATEGY CALCULATOR</h2>
+                    <p class="strat-header-sub">Simulates current month Nifty Futures trading hedged with Put/Call options to eliminate catastrophic risk with strictly guaranteed Maximum Loss.</p>
+                </div>
+                <button id="close-strategy-modal-btn" class="icon-btn" title="Close (Esc)">✕</button>
+            </div>
+
+            <div class="strategy-modal-body" id="strategy-modal-content">
+                <!-- Dynamically populated by NiftyStrategyManager -->
+            </div>
+        </div>
+
+        <!-- Toast Notifications Container -->
+        <div id="notifications-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/lightweight-charts.standalone.js?v=1.6"></script>
+    <script src="js/indicators.js?v=1.6"></script>
+    <script src="js/chart-engine.js?v=1.6"></script>
+    <script src="js/drawing-tools.js?v=1.6"></script>
+    <script src="js/search-modal.js?v=1.6"></script>
+    <script src="js/technical-summary.js?v=1.6"></script>
+    <script src="js/nifty-strategy.js?v=1.6"></script>
+    <script src="js/data-service.js?v=1.6"></script>
+    <script src="js/app.js?v=1.6"></script>
+</body>
+</html>
