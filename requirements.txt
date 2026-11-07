@@ -1,0 +1,2 @@
+# NIFTY PRO TERMINAL
+# Zero external dependencies - standard library Python only

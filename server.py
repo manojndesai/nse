@@ -16,6 +16,8 @@ import datetime
 import urllib.request
 import urllib.error
 import urllib.parse
+import shutil
+import subprocess
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import socketserver
 import threading
@@ -128,6 +130,52 @@ def is_market_open():
     return is_weekday and (market_open_time <= ist_now <= market_close_time)
 
 
+def get_curl_bin():
+    """Locate curl executable across Windows, Linux, and Vercel environments."""
+    return shutil.which("curl") or shutil.which("curl.exe") or "curl"
+
+
+def fetch_nse_json(url, timeout=10):
+    """
+    Robust, cross-platform JSON fetcher for NSE India endpoints.
+    Tries curl first (handles Akamai TLS fingerprinting), with urllib fallback.
+    """
+    ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    headers = {
+        "User-Agent": ua,
+        "Accept": "application/json, text/plain, */*",
+        "Referer": "https://www.nseindia.com"
+    }
+
+    # 1. Try curl binary (available on Linux / macOS / Windows)
+    try:
+        curl_bin = get_curl_bin()
+        cmd = [
+            curl_bin, "-s", "--max-time", str(timeout),
+            "-H", f"User-Agent: {ua}",
+            "-H", "Accept: application/json, text/plain, */*",
+            "-H", "Referer: https://www.nseindia.com",
+            url
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout + 2)
+        if res.returncode == 0 and res.stdout.strip().startswith("{"):
+            return json.loads(res.stdout)
+    except Exception:
+        pass
+
+    # 2. Urllib standard library fallback
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            content = response.read().decode("utf-8")
+            if content.strip().startswith("{"):
+                return json.loads(content)
+    except Exception:
+        pass
+
+    return None
+
+
 def fetch_nse_indices():
     """
     Fetch official real-time quotes directly from National Stock Exchange of India (nseindia.com).
@@ -139,52 +187,40 @@ def fetch_nse_indices():
     if NSE_INDICES_CACHE["data"] and (now - NSE_INDICES_CACHE["timestamp"] < cache_duration):
         return NSE_INDICES_CACHE["data"]
 
-    import subprocess
-    cmd = [
-        "curl.exe", "-s",
-        "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "-H", "Accept: application/json, text/plain, */*",
-        "-H", "Referer: https://www.nseindia.com",
-        "https://www.nseindia.com/api/allIndices"
-    ]
-    try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=8)
-        if res.returncode == 0 and res.stdout.strip().startswith("{"):
-            parsed = json.loads(res.stdout)
-            result = {}
-            for item in parsed.get("data", []):
-                idx_name = item.get("index")
-                if idx_name:
-                    result[idx_name] = {
-                        "name": idx_name,
-                        "last": float(item.get("last", 0)),
-                        "change": float(item.get("variation", 0)),
-                        "percentChange": float(item.get("percentChange", 0)),
-                        "open": float(item.get("open", 0)),
-                        "high": float(item.get("high", 0)),
-                        "low": float(item.get("low", 0)),
-                        "previousClose": float(item.get("previousClose", 0)),
-                        "yearHigh": float(item.get("yearHigh", 0)),
-                        "yearLow": float(item.get("yearLow", 0)),
-                        "timestamp": parsed.get("timestamp", "")
+    parsed = fetch_nse_json("https://www.nseindia.com/api/allIndices", timeout=8)
+    if parsed and isinstance(parsed, dict):
+        result = {}
+        for item in parsed.get("data", []):
+            idx_name = item.get("index")
+            if idx_name:
+                result[idx_name] = {
+                    "name": idx_name,
+                    "last": float(item.get("last", 0)),
+                    "change": float(item.get("variation", 0)),
+                    "percentChange": float(item.get("percentChange", 0)),
+                    "open": float(item.get("open", 0)),
+                    "high": float(item.get("high", 0)),
+                    "low": float(item.get("low", 0)),
+                    "previousClose": float(item.get("previousClose", 0)),
+                    "yearHigh": float(item.get("yearHigh", 0)),
+                    "yearLow": float(item.get("yearLow", 0)),
+                    "timestamp": parsed.get("timestamp", "")
+                }
+        if result:
+            NSE_INDICES_CACHE = {"data": result, "timestamp": now}
+            for sym, nse_name in NSE_SYMBOL_MAP.items():
+                if nse_name in result:
+                    val = result[nse_name]
+                    LIVE_PRICE_CACHE[sym] = {
+                        "price": val["last"],
+                        "prevClose": val["previousClose"],
+                        "high": val["high"],
+                        "low": val["low"],
+                        "volume": 14200000,
+                        "timestamp": int(now),
+                        "isOfficialNSE": True
                     }
-            if result:
-                NSE_INDICES_CACHE = {"data": result, "timestamp": now}
-                for sym, nse_name in NSE_SYMBOL_MAP.items():
-                    if nse_name in result:
-                        val = result[nse_name]
-                        LIVE_PRICE_CACHE[sym] = {
-                            "price": val["last"],
-                            "prevClose": val["previousClose"],
-                            "high": val["high"],
-                            "low": val["low"],
-                            "volume": 14200000,
-                            "timestamp": int(now),
-                            "isOfficialNSE": True
-                        }
-                return result
-    except Exception as e:
-        print(f"[NSE India Live Feed Error]: {e}", flush=True)
+            return result
 
     return NSE_INDICES_CACHE.get("data", {})
 
@@ -211,64 +247,42 @@ def fetch_nse_derivatives():
     import subprocess
 
     fut_list = []
-    try:
-        cmd_fut = [
-            "curl.exe", "-s",
-            "-H", "User-Agent: " + ua,
-            "-H", "Accept: application/json, text/plain, */*",
-            "-H", "Referer: https://www.nseindia.com",
-            "https://www.nseindia.com/api/liveEquity-derivatives?index=nse50_fut"
-        ]
-        res_fut = subprocess.run(cmd_fut, capture_output=True, text=True, timeout=10)
-        if res_fut.returncode == 0 and res_fut.stdout.strip().startswith("{"):
-            parsed_fut = json.loads(res_fut.stdout).get("data", [])
-            for it in parsed_fut:
-                exp = it.get("expiryDate")
-                if exp:
-                    fut_list.append({
-                        "expiryDate": exp,
-                        "lastPrice": float(it.get("lastPrice", 0)),
-                        "openPrice": float(it.get("openPrice", 0)),
-                        "prevClose": float(it.get("prevClose", 0)),
-                        "instrumentType": it.get("instrumentType", "FUTIDX")
-                    })
-    except Exception as e:
-        print(f"[NSE Futures Fetch Error]: {e}", flush=True)
+    parsed_fut = fetch_nse_json("https://www.nseindia.com/api/liveEquity-derivatives?index=nse50_fut", timeout=10)
+    if parsed_fut and isinstance(parsed_fut, dict):
+        for it in parsed_fut.get("data", []):
+            exp = it.get("expiryDate")
+            if exp:
+                fut_list.append({
+                    "expiryDate": exp,
+                    "lastPrice": float(it.get("lastPrice", 0)),
+                    "openPrice": float(it.get("openPrice", 0)),
+                    "prevClose": float(it.get("prevClose", 0)),
+                    "instrumentType": it.get("instrumentType", "FUTIDX")
+                })
 
     opt_map = {}
     exp_set = set()
-    try:
-        cmd_opt = [
-            "curl.exe", "-s",
-            "-H", "User-Agent: " + ua,
-            "-H", "Accept: application/json, text/plain, */*",
-            "-H", "Referer: https://www.nseindia.com",
-            "https://www.nseindia.com/api/liveEquity-derivatives?index=nse50_opt"
-        ]
-        res_opt = subprocess.run(cmd_opt, capture_output=True, text=True, timeout=12)
-        if res_opt.returncode == 0 and res_opt.stdout.strip().startswith("{"):
-            parsed_opt = json.loads(res_opt.stdout).get("data", [])
-            for it in parsed_opt:
-                exp = it.get("expiryDate")
-                if not exp:
-                    continue
-                exp_set.add(exp)
-                if exp not in opt_map:
-                    opt_map[exp] = {}
-                strike = int(round(float(it.get("strikePrice", 0))))
-                if strike not in opt_map[exp]:
-                    opt_map[exp][strike] = {}
-                opt_type = it.get("optionType")
-                std_type = "CE" if opt_type in ["Call", "CE"] else "PE"
-                opt_map[exp][strike][std_type] = {
-                    "lastPrice": float(it.get("lastPrice", 0)),
-                    "prevClose": float(it.get("prevClose", 0)),
-                    "openPrice": float(it.get("openPrice", 0)),
-                    "volume": int(it.get("numberOfContractsTraded", 0)),
-                    "iv": float(it.get("impliedVolatility", 0))
-                }
-    except Exception as e:
-        print(f"[NSE Options Fetch Error]: {e}", flush=True)
+    parsed_opt = fetch_nse_json("https://www.nseindia.com/api/liveEquity-derivatives?index=nse50_opt", timeout=12)
+    if parsed_opt and isinstance(parsed_opt, dict):
+        for it in parsed_opt.get("data", []):
+            exp = it.get("expiryDate")
+            if not exp:
+                continue
+            exp_set.add(exp)
+            if exp not in opt_map:
+                opt_map[exp] = {}
+            strike = int(round(float(it.get("strikePrice", 0))))
+            if strike not in opt_map[exp]:
+                opt_map[exp][strike] = {}
+            opt_type = it.get("optionType")
+            std_type = "CE" if opt_type in ["Call", "CE"] else "PE"
+            opt_map[exp][strike][std_type] = {
+                "lastPrice": float(it.get("lastPrice", 0)),
+                "prevClose": float(it.get("prevClose", 0)),
+                "openPrice": float(it.get("openPrice", 0)),
+                "volume": int(it.get("numberOfContractsTraded", 0)),
+                "iv": float(it.get("impliedVolatility", 0))
+            }
 
     def parse_exp(s):
         try:
