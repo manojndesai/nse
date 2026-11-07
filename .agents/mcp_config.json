@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "nse-bhavcopy": {
+      "url": "https://mcp.nseindia.in/bhavcopy/cm/mcp",
+      "serverUrl": "https://mcp.nseindia.in/bhavcopy/cm/mcp",
+      "transport": "streamable-http",
+      "description": "Official NSE Capital Market Bhavcopy MCP Server providing daily end-of-day OHLCV, turnover, and market breadth data up to 5 years."
+    },
+    "cm-market": {
+      "url": "https://mcp.nseindia.in/cmmkt/mcp",
+      "serverUrl": "https://mcp.nseindia.in/cmmkt/mcp",
+      "transport": "streamable-http",
+      "description": "Official NSE Capital Market Live MCP Server providing current session market snapshots, live quotes, top gainers, and losers."
+    }
+  }
+}
