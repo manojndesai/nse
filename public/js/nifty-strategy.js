@@ -17,6 +17,9 @@ class NiftyStrategyManager {
         this.expiryDisplay = '';
         this.weeklyExpiryDisplay = '';
         this.monthlyExpiryDisplay = '';
+        this.availableExpiries = [];
+        this.futuresList = [];
+        this.isOfficialNSE = false;
         this.weeklyDte = 2.8;
         this.monthlyDte = 16.8;
         this.daysToExpiry = 2.8;
@@ -160,6 +163,10 @@ class NiftyStrategyManager {
                 expiryType: this.expiryType
             });
 
+            if (this.expiryDate) {
+                params.set('expiryDate', this.expiryDate);
+            }
+
             if (this.isUserOverriddenPrice && this.futureRate) {
                 params.set('futurePrice', this.futureRate.toString());
             }
@@ -179,6 +186,9 @@ class NiftyStrategyManager {
                 this.expiryDisplay = data.expiryDisplay;
                 this.weeklyExpiryDisplay = data.weeklyExpiryDisplay || data.expiryDisplay;
                 this.monthlyExpiryDisplay = data.monthlyExpiryDisplay || '';
+                this.availableExpiries = data.availableExpiries || [];
+                this.futuresList = data.futures || [];
+                this.isOfficialNSE = data.isOfficialNSE || false;
                 this.weeklyDte = data.weeklyDte || data.daysToExpiry;
                 this.monthlyDte = data.monthlyDte || 22.0;
                 this.daysToExpiry = data.daysToExpiry;
@@ -258,6 +268,18 @@ class NiftyStrategyManager {
         }
     }
 
+    renderExpirySelectHTML() {
+        if (!this.availableExpiries || this.availableExpiries.length === 0) return '';
+        const options = this.availableExpiries.map(exp => {
+            const isSel = exp.toLowerCase() === (this.expiryDate || '').toLowerCase();
+            let label = exp;
+            if (exp.toLowerCase() === (this.weeklyExpiryDisplay || '').toLowerCase()) label += ' (NSE Weekly)';
+            else if (exp.toLowerCase() === (this.monthlyExpiryDisplay || '').toLowerCase()) label += ' (NSE Monthly)';
+            return `<option value="${exp}" ${isSel ? 'selected' : ''}>${label}</option>`;
+        }).join('');
+        return `<select id="strat-exp-select" class="strat-exp-select" title="Select Official NSE Expiry Date">${options}</select>`;
+    }
+
     renderModal() {
         const container = document.getElementById('strategy-modal-content');
         if (!container) return;
@@ -293,16 +315,18 @@ class NiftyStrategyManager {
                     <div class="meta-row">
                         <span class="meta-label">Contract:</span>
                         <span class="meta-val highlight-cyan">${this.contractName}</span>
+                        ${this.isOfficialNSE ? '<span class="nse-live-badge">✓ Official NSE Website Data</span>' : ''}
                     </div>
                     <div class="meta-row">
-                        <span class="meta-label">Expiry Mode:</span>
+                        <span class="meta-label">NSE Expiry:</span>
                         <div class="strat-expiry-toggle-group">
-                            <button id="strat-exp-weekly" class="strat-exp-btn ${this.expiryType === 'weekly' ? 'active-exp' : ''}" title="Next Weekly Tuesday Expiry (NSE Expiry)">
-                                ⚡ Weekly Tuesday (${this.weeklyExpiryDisplay || this.expiryDisplay} · ${this.weeklyDte || this.daysToExpiry}d)
+                            <button id="strat-exp-weekly" class="strat-exp-btn ${this.expiryDate === this.weeklyExpiryDisplay ? 'active-exp' : ''}" title="Official NSE Weekly Expiry">
+                                ⚡ Weekly (${this.weeklyExpiryDisplay || this.expiryDisplay} · ${this.weeklyDte || this.daysToExpiry}d)
                             </button>
-                            <button id="strat-exp-monthly" class="strat-exp-btn ${this.expiryType === 'monthly' ? 'active-exp' : ''}" title="Monthly Final Tuesday Expiry (NSE Expiry)">
-                                📅 Monthly Tuesday (${this.monthlyExpiryDisplay || 'Month'} · ${this.monthlyDte || 16.8}d)
+                            <button id="strat-exp-monthly" class="strat-exp-btn ${this.expiryDate === this.monthlyExpiryDisplay ? 'active-exp' : ''}" title="Official NSE Monthly Expiry">
+                                📅 Monthly (${this.monthlyExpiryDisplay || 'Month'} · ${this.monthlyDte || 16.8}d)
                             </button>
+                            ${this.renderExpirySelectHTML()}
                         </div>
                     </div>
                 </div>
@@ -387,6 +411,7 @@ class NiftyStrategyManager {
                                     <span class="input-currency" style="font-size: 12px;">₹</span>
                                     <input type="number" step="0.05" id="strat-premium-override-input" class="param-num-input font-mono" value="${selectedItem.premium.toFixed(2)}" style="font-size: 13px; font-weight: 700; width: 80px;" title="Fine-tune option premium to match live market quotes">
                                 </div>
+                                ${selectedItem.isOfficialNSE ? '<span class="badge-official-nse">✓ Official NSE LTP</span>' : ''}
                                 <span class="stat-val font-mono"><small>(₹${selectedItem.totalHedgeCost.toLocaleString(undefined, {minimumFractionDigits: 2})} total)</small></span>
                             </div>
                         </div>
@@ -532,7 +557,7 @@ class NiftyStrategyManager {
                     </td>
                     <td><span class="type-badge ${item.optionType === 'PE' ? 'pe-badge' : 'ce-badge'}">${item.optionType}</span></td>
                     <td><span class="moneyness-pill moneyness-${item.moneyness.toLowerCase()}">${item.moneyness}</span></td>
-                    <td class="font-mono">₹${item.premium.toFixed(2)}</td>
+                    <td class="font-mono">₹${item.premium.toFixed(2)}${item.isOfficialNSE ? '<span class="nse-badge-mini" title="Live Official NSE Market LTP">✓ NSE</span>' : ''}</td>
                     <td class="font-mono">₹${item.totalHedgeCost.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td class="col-highlight-risk">
                         <span class="max-loss-cell-val font-mono">
@@ -802,23 +827,34 @@ class NiftyStrategyManager {
             });
         }
 
-        // Expiry Toggle buttons
+        // Expiry Toggle buttons & Select dropdown
         const expWeekly = document.getElementById('strat-exp-weekly');
         const expMonthly = document.getElementById('strat-exp-monthly');
+        const expSelect = document.getElementById('strat-exp-select');
+
         if (expWeekly) {
             expWeekly.addEventListener('click', () => {
-                if (this.expiryType !== 'weekly') {
-                    this.expiryType = 'weekly';
-                    this.fetchStrategyData();
-                }
+                this.expiryDate = this.weeklyExpiryDisplay;
+                this.expiryType = 'weekly';
+                this.fetchStrategyData();
             });
         }
         if (expMonthly) {
             expMonthly.addEventListener('click', () => {
-                if (this.expiryType !== 'monthly') {
+                this.expiryDate = this.monthlyExpiryDisplay;
+                this.expiryType = 'monthly';
+                this.fetchStrategyData();
+            });
+        }
+        if (expSelect) {
+            expSelect.addEventListener('change', (e) => {
+                this.expiryDate = e.target.value;
+                if (this.expiryDate.toLowerCase() === (this.monthlyExpiryDisplay || '').toLowerCase()) {
                     this.expiryType = 'monthly';
-                    this.fetchStrategyData();
+                } else if (this.expiryDate.toLowerCase() === (this.weeklyExpiryDisplay || '').toLowerCase()) {
+                    this.expiryType = 'weekly';
                 }
+                this.fetchStrategyData();
             });
         }
 
