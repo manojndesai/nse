@@ -904,49 +904,63 @@ class NiftyTerminalHandler(SimpleHTTPRequestHandler):
         except (ValueError, TypeError):
             iv = live_vix / 100.0
 
-        # Calculate Weekly Expiry (Nearest Thursday at 15:30 IST) and Monthly Expiry (Last Thursday of Month)
+        # Calculate Weekly Expiry (Nearest Tuesday at 15:30 IST per NSE) and Monthly Expiry (Last Tuesday of Month per NSE)
         ist_tz = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
         now_ist = datetime.datetime.now(ist_tz)
 
-        # 1. Weekly Thursday
-        days_to_thu = (3 - now_ist.weekday()) % 7
-        weekly_date = now_ist.date() + datetime.timedelta(days=days_to_thu)
+        # 1. Weekly Tuesday (Nearest upcoming Tuesday at 15:30 IST)
+        days_to_tue = (1 - now_ist.weekday()) % 7
+        weekly_date = now_ist.date() + datetime.timedelta(days=days_to_tue)
         weekly_dt = datetime.datetime(weekly_date.year, weekly_date.month, weekly_date.day, 15, 30, tzinfo=ist_tz)
         if now_ist > weekly_dt:
             weekly_date = weekly_date + datetime.timedelta(days=7)
             weekly_dt = datetime.datetime(weekly_date.year, weekly_date.month, weekly_date.day, 15, 30, tzinfo=ist_tz)
-        weekly_dte = max(0.5, (weekly_dt - now_ist).total_seconds() / 86400.0)
+        weekly_dte = max(0.1, (weekly_dt - now_ist).total_seconds() / 86400.0)
 
-        # 2. Monthly Thursday
-        def last_thursday_of_month(year, month):
+        # 2. Monthly Tuesday (Last Tuesday of the current calendar month)
+        def last_tuesday_of_month(year, month):
             if month == 12:
                 next_m = datetime.date(year + 1, 1, 1)
             else:
                 next_m = datetime.date(year, month + 1, 1)
             last_day = next_m - datetime.timedelta(days=1)
-            offset = (last_day.weekday() - 3) % 7
+            offset = (last_day.weekday() - 1) % 7
             return last_day - datetime.timedelta(days=offset)
 
-        monthly_date = last_thursday_of_month(now_ist.year, now_ist.month)
+        monthly_date = last_tuesday_of_month(now_ist.year, now_ist.month)
         monthly_dt = datetime.datetime(monthly_date.year, monthly_date.month, monthly_date.day, 15, 30, tzinfo=ist_tz)
         if now_ist > monthly_dt:
             next_m = 1 if now_ist.month == 12 else now_ist.month + 1
             next_y = now_ist.year + 1 if now_ist.month == 12 else now_ist.year
-            monthly_date = last_thursday_of_month(next_y, next_m)
+            monthly_date = last_tuesday_of_month(next_y, next_m)
             monthly_dt = datetime.datetime(monthly_date.year, monthly_date.month, monthly_date.day, 15, 30, tzinfo=ist_tz)
-        monthly_dte = max(0.5, (monthly_dt - now_ist).total_seconds() / 86400.0)
+        monthly_dte = max(0.1, (monthly_dt - now_ist).total_seconds() / 86400.0)
 
-        # Check requested expiry type (default to weekly for active index options)
+        # Check requested expiry type (default to weekly Tuesday per NSE)
         expiry_type = query.get("expiryType", ["weekly"])[0].lower()
         if expiry_type == "monthly":
             expiry_date = monthly_date
             dte = monthly_dte
-            contract_name = f"NIFTY {monthly_date.strftime('%d-%b-%Y').upper()} MONTHLY FUT"
+            contract_name = f"NIFTY {monthly_date.strftime('%d-%b-%Y').upper()} MONTHLY TUE FUT"
         else:
             expiry_type = "weekly"
             expiry_date = weekly_date
             dte = weekly_dte
-            contract_name = f"NIFTY {weekly_date.strftime('%d-%b-%Y').upper()} WEEKLY"
+            contract_name = f"NIFTY {weekly_date.strftime('%d-%b-%Y').upper()} WEEKLY TUE"
+
+        # Check if an explicit expiryDate was supplied (e.g. 2026-11-10 or 2026-11-24)
+        req_expiry = query.get("expiryDate", [None])[0]
+        if req_expiry:
+            try:
+                p = [int(x) for x in req_expiry.split("-")]
+                chosen_date = datetime.date(p[0], p[1], p[2])
+                chosen_dt = datetime.datetime(chosen_date.year, chosen_date.month, chosen_date.day, 15, 30, tzinfo=ist_tz)
+                expiry_date = chosen_date
+                dte = max(0.1, (chosen_dt - now_ist).total_seconds() / 86400.0)
+                is_mon = chosen_date == monthly_date
+                contract_name = f"NIFTY {chosen_date.strftime('%d-%b-%Y').upper()} ({'MONTHLY TUE' if is_mon else 'WEEKLY TUE'})"
+            except Exception:
+                pass
 
         custom_dte = query.get("dte", [None])[0]
         if custom_dte:

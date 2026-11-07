@@ -17,9 +17,9 @@ class NiftyStrategyManager {
         this.expiryDisplay = '';
         this.weeklyExpiryDisplay = '';
         this.monthlyExpiryDisplay = '';
-        this.weeklyDte = 4.5;
-        this.monthlyDte = 22.0;
-        this.daysToExpiry = 4.5;
+        this.weeklyDte = 2.8;
+        this.monthlyDte = 16.8;
+        this.daysToExpiry = 2.8;
         this.lotSize = 65;
         this.lots = 1;
         this.iv = 17.66; // %
@@ -297,11 +297,11 @@ class NiftyStrategyManager {
                     <div class="meta-row">
                         <span class="meta-label">Expiry Mode:</span>
                         <div class="strat-expiry-toggle-group">
-                            <button id="strat-exp-weekly" class="strat-exp-btn ${this.expiryType === 'weekly' ? 'active-exp' : ''}" title="Next Weekly Thursday Expiry (Most Active for Options)">
-                                ⚡ Weekly (${this.weeklyExpiryDisplay || this.expiryDisplay} · ${this.weeklyDte || this.daysToExpiry}d)
+                            <button id="strat-exp-weekly" class="strat-exp-btn ${this.expiryType === 'weekly' ? 'active-exp' : ''}" title="Next Weekly Tuesday Expiry (NSE Expiry)">
+                                ⚡ Weekly Tuesday (${this.weeklyExpiryDisplay || this.expiryDisplay} · ${this.weeklyDte || this.daysToExpiry}d)
                             </button>
-                            <button id="strat-exp-monthly" class="strat-exp-btn ${this.expiryType === 'monthly' ? 'active-exp' : ''}" title="Current Month Final Thursday Expiry">
-                                📅 Monthly (${this.monthlyExpiryDisplay || 'Month'} · ${this.monthlyDte || 22}d)
+                            <button id="strat-exp-monthly" class="strat-exp-btn ${this.expiryType === 'monthly' ? 'active-exp' : ''}" title="Monthly Final Tuesday Expiry (NSE Expiry)">
+                                📅 Monthly Tuesday (${this.monthlyExpiryDisplay || 'Month'} · ${this.monthlyDte || 16.8}d)
                             </button>
                         </div>
                     </div>
